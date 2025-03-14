@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleUser {
+  USERCPNS
+  ADMIN
+  USERUJIANAKBAR
+  USERLAIN
+}
+
+enum Status {
+  ACTIVE
+  NOT_ACTIVE
+}
+
+enum Information {
+  LULUS
+  TIDAK_LULUS
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  address    String
+  email      String   @unique
+  password   String
+  userRole   RoleUser @default(USERCPNS)
+  userStatus Status   @default(NOT_ACTIVE)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tryOutResults    FinalScore[]
+  bigTryOutResults FinalScoreBigTryOut[]
+  userAnswer userAnswers[]
+}
+
+model TryOut {
+  id             Int    @id @default(autoincrement())
+  tryOutName     String
+  questionTypeId Int
+  questionAmount Int
+  time           Int // Waktu dalam detik
+  standardScore  Int
+
+  questionType QuestionType @relation(fields: [questionTypeId], references: [id])
+  finalScores  FinalScore[]
+}
+
+model MaterialType {
+  id           Int    @id @default(autoincrement())
+  materialName String
+
+  questionType  QuestionType[]
+  finalScores    FinalScore[]
+  finalScoresBig FinalScoreBigTryOut[] // Tambahkan hubungan ke FinalScoreBigTryOut
+}
+
+model QuestionType {
+  id               Int            @id @default(autoincrement())
+  questionTypeName String
+  materialTypeId  Int
+
+  materialType MaterialType @relation(fields: [materialTypeId], references: [id])
+  tryOuts          TryOut[]
+  questions        QuestionData[] // Tambahkan hubungan ke QuestionData
+}
+
+model BigTryOut {
+  id                    Int    @id @default(autoincrement())
+  bigTryOutName         String
+  questionType1         Int
+  questionType2         Int
+  questionType3         Int
+  time                  Int // Waktu dalam detik
+  standardQuestionType1 Int
+  standardQuestionType2 Int
+  standardQuestionType3 Int
+  questionAmount1       Int
+  questionAmount2       Int
+  questionAmount3       Int
+  allQuestionAmount     Int
+  tryOutStatus          Status @default(NOT_ACTIVE)
+
+  finalScoresBig FinalScoreBigTryOut[]
+}
+
+model QuestionData {
+  id                Int     @id @default(autoincrement())
+  question          String
+  questionImage     String?
+  choiceA           String?
+  imageA            String?
+  choiceB           String?
+  imageB            String?
+  choiceC           String?
+  imageC            String?
+  choiceD           String?
+  imageD            String?
+  choiceE           String?
+  imageE            String?
+  explanation       String?
+  explanationImage  String?
+  explanationAnswer String
+  questionTypeId    Int
+  scoreChoiceA      Int
+  scoreChoiceB      Int
+  scoreChoiceC      Int
+  scoreChoiceD      Int
+  scoreChoiceE      Int
+
+  questionType QuestionType @relation(fields: [questionTypeId], references: [id])
+  userAnswer userAnswers[]
+}
+
+model FinalScore {
+  id          Int         @id @default(autoincrement())
+  tryOutId    Int
+  userId      Int
+  materialId  Int
+  score       Int
+  information Information
+
+  user     User         @relation(fields: [userId], references: [id])
+  tryOut   TryOut       @relation(fields: [tryOutId], references: [id])
+  material MaterialType @relation(fields: [materialId], references: [id])
+}
+
+model userAnswers {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  questionId  Int
+  answerValue Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question QuestionData @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+
+model FinalScoreBigTryOut {
+  id             Int         @id @default(autoincrement())
+  tryOutId       Int
+  userId         Int
+  materialId     Int
+  tkpScore       Int
+  twkScore       Int
+  tiuScore       Int
+  tkpInformation Information
+  twkInformation Information
+  tiuInformation Information
+  information    Information
+
+  user      User         @relation(fields: [userId], references: [id])
+  bigTryOut BigTryOut    @relation(fields: [tryOutId], references: [id])
+  material  MaterialType @relation(fields: [materialId], references: [id])
+}
+
