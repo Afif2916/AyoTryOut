@@ -26,7 +26,7 @@ enum Information {
 
 model User {
   id         Int      @id @default(autoincrement())
-  firstName  String
+  firstName  String   
   lastName   String
   address    String
   email      String   @unique
@@ -69,15 +69,18 @@ model QuestionType {
 
   materialType MaterialType @relation(fields: [materialTypeId], references: [id])
   tryOuts          TryOut[]
+  bigTryOuts1      BigTryOut[]  @relation(name: "QuestionType1")
+  bigTryOuts2      BigTryOut[]  @relation(name: "QuestionType2")
+  bigTryOuts3      BigTryOut[]  @relation(name: "QuestionType3")
   questions        QuestionData[] // Tambahkan hubungan ke QuestionData
 }
 
 model BigTryOut {
   id                    Int    @id @default(autoincrement())
   bigTryOutName         String
-  questionType1         Int
-  questionType2         Int
-  questionType3         Int
+  questionTypeId_1         Int
+  questionTypeId_2         Int
+  questionTypeId_3         Int
   time                  Int // Waktu dalam detik
   standardQuestionType1 Int
   standardQuestionType2 Int
@@ -89,6 +92,10 @@ model BigTryOut {
   tryOutStatus          Status @default(NOT_ACTIVE)
 
   finalScoresBig FinalScoreBigTryOut[]
+  questionType_1        QuestionType @relation(name: "QuestionType1", fields: [questionTypeId_1], references: [id])
+  questionType_2        QuestionType @relation(name: "QuestionType2", fields: [questionTypeId_2], references: [id])
+  questionType_3        QuestionType @relation(name: "QuestionType3", fields: [questionTypeId_3], references: [id])
+ 
 }
 
 model QuestionData {

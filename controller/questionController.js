@@ -58,7 +58,7 @@ function validationRequest(value, fieldName) {
     if (!value) throw new Error(`${fieldName} wajib diisi`);
     
     const parsedValue = parseInt(value);
-    if (isNaN(parsedValue)) throw new Error(`${fieldName} harus berupa angka`);
+    if (isNaN(parsedValue)) throw new Error(`${fieldName} harus berupa Integer`);
 
     return parsedValue;
 }
