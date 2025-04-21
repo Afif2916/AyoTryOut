@@ -33,6 +33,7 @@ model User {
   password   String
   userRole   RoleUser @default(USERCPNS)
   userStatus Status   @default(NOT_ACTIVE)
+  refreshToken String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -48,6 +49,7 @@ model TryOut {
   questionAmount Int
   time           Int // Waktu dalam detik
   standardScore  Int
+  tryOutStatus Status   @default(NOT_ACTIVE)
 
   questionType QuestionType @relation(fields: [questionTypeId], references: [id])
   finalScores  FinalScore[]
