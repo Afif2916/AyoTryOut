@@ -2,6 +2,8 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const {blankValidationRequest, validationRequest} = require("../utils/validation")
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken")
+require("dotenv").config();
 
 const registerController = async (req, res) => {
     const { firstName, lastName, email, password} = req.body
@@ -51,8 +53,48 @@ const registerController = async (req, res) => {
 }
 
 const loginController = async (req, res) => {
+    try {
+        const {email, password} = req.body
 
+        const user = await prisma.user.findUnique({ where: {email}})
+
+        if (!user) return res.status(404).json({error: "User Not Found"})
+
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) return res.status(401).json({message: "Wrong Password"})
+
+        const accessToken = jwt.sign({id: user.id, userRole: user.userRole, userStatus: user.userStatus,  email: email}, process.env.JWT_SECRET_KEY, {expiresIn: "15m"})
+        const refreshToken = jwt.sign({ id: user.id, userRole: user.userRole, userStatus: user.userStatus,  email: email }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' })
+
+        await prisma.user.update({
+            where: {id: parseInt(user.id)},
+            data: {refreshToken}
+        })
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
+
+        res.status(201).json({
+            message: "Login Berhasil",
+            user: {
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                userStatus: user.userStatus,
+                userRole: user.userRole
+            },
+            accessToken
+        })
+
+    } catch (error) {
+        res.status(500).json({ error: 'Terjadi kesalahan saat mengambil data.', message: error.message });
+    }
 }
+
 
 const refreshToken = async (req, res) => {
 
@@ -103,7 +145,7 @@ const getUserById = async (req, res) => {
 const updateUser = async (req, res) => {
     const { id } = req.params
 
-    const { firstName, lastName, address, email} = req.body
+    const { firstName, lastName, address, email, userRole} = req.body
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -133,7 +175,8 @@ const updateUser = async (req, res) => {
             firstName: firstNameOK,
             lastName: lastNameOK,
             email: emailNotNull,
-            address
+            address, 
+            userRole
         }   
     })
 
@@ -156,5 +199,5 @@ const deleteUser = async (req, res) => {
 }
 
 module.exports = {
-    registerController, getUser, getUserById, updateUser
+    registerController, getUser, getUserById, updateUser, loginController
 }
